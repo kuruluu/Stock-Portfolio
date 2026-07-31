@@ -1,0 +1,15 @@
+,Pure momentum,Filtered momentum,SPY
+annualized_alpha,3.94%,3.80%,
+annualized_turnover,368.22%,368.22%,
+annualized_volatility,14.27%,14.26%,15.66%
+average_monthly_turnover,30.69%,30.69%,
+beta,0.670,0.666,
+cagr,13.92%,13.70%,14.89%
+calmar_ratio,0.847,0.833,0.622
+information_ratio,-0.098,-0.115,
+maximum_drawdown,-16.44%,-16.44%,-23.93%
+maximum_drawdown_duration,12 months,18 months,23 months
+positive_month_rate,67.29%,67.29%,71.03%
+sharpe_ratio,0.988,0.975,0.969
+sortino_ratio,0.981,0.967,0.831
+total_return,219.57%,214.19%,244.67%

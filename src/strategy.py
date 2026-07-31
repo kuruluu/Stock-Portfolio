@@ -1,6 +1,7 @@
 from __future__ import annotations
 import pandas as pd
 
+
 def calculate_12_1_momentum(monthly_close: pd.DataFrame) -> pd.DataFrame:
     """
     Calculate prior-(2,12) momentum for each ETF.
@@ -23,13 +24,14 @@ def calculate_12_1_momentum(monthly_close: pd.DataFrame) -> pd.DataFrame:
         Momentum scores with the same index and columns.
     """
 
-    if monthly_close.empty():
+    if monthly_close.empty:
         raise ValueError("monthly_close cannot be empty.")
     if not isinstance(monthly_close.index, pd.DatetimeIndex):
         raise TypeError("monthly_close must use a pandas DateTimeIndex")
 
     momentum = monthly_close.shift(1) / monthly_close.shift(12) - 1
     return momentum
+
 
 def select_top_assets(momentum_scores: pd.Series, number_of_assets: int = 5, require_positive_momentum: bool = False) -> pd.Series:
     """
@@ -56,9 +58,10 @@ def select_top_assets(momentum_scores: pd.Series, number_of_assets: int = 5, req
         raise ValueError("number_of_assets must be a positive integer.")
 
     scores = momentum_scores.dropna()
-    if requires_positive_momentum:
+    if require_positive_momentum:
         scores = scores[scores > 0]
     return scores.nlargest(number_of_assets)
+
 
 def calculate_equal_weights(momentum_scores: pd.Series, number_of_assets: int = 5,
                             require_positive_momentum: bool = False, use_fixed_slots: bool = True) -> pd.Series:
@@ -106,12 +109,13 @@ def calculate_equal_weights(momentum_scores: pd.Series, number_of_assets: int = 
     if selected.empty:
         return weights
     if use_fixed_slots:
-        position.weight = 1.0 / number_of_assets
+        position_weight = 1.0 / number_of_assets
     else:
-        position.weight = 1.0 / len(selected)
+        position_weight = 1.0 / len(selected)
 
-    weights.loc[selected.index] = position.weight
+    weights.loc[selected.index] = position_weight
     return weights
+
 
 def generate_target_weights(monthly_close: pd.DataFrame, number_of_assets: int = 5, 
                             require_positive_momentum: bool = False, use_fixed_slots: bool = True) -> pd.DataFrame:
@@ -132,7 +136,9 @@ def generate_target_weights(monthly_close: pd.DataFrame, number_of_assets: int =
     weights = momentum.apply(lambda row: calculate_equal_weights(
         momentum_scores=row, number_of_assets=number_of_assets, 
         require_positive_momentum=require_positive_momentum, use_fixed_slots=use_fixed_slots), axis=1)
+    weights.loc[~momentum.notna().any(axis=1)] = float("nan")
     return weights
+
 
 def calculate_cash_weights(asset_weights: pd.DataFrame) -> pd.Series:
     """

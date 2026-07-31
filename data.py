@@ -12,7 +12,13 @@ from alpaca.data.timeframe import TimeFrame
 from dotenv import load_dotenv
 
 
-SYMBOLS = ["SPY", "QQQ", "IWM", "XLK", "XLF", "XLE", "XLV", "XLI", "XLP", "XLY", "TLT", "GLD"]
+SYMBOLS = [
+    #Set 1
+    "SPY", "QQQ", "IWM", "XLK", "XLF", "XLE", "XLV", "XLI", "XLP", "XLY", "TLT", "GLD",
+    
+    #Set 2
+    "MDY", "EFA", "EEM", "VNQ", "SHY", "IEF", "TIP", "LQD", "DBC"
+    ]
 START_DATE = datetime(2016, 1, 1, tzinfo=timezone.utc)
 END_DATE = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
