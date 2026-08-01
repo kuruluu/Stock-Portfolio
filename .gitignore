@@ -28,6 +28,8 @@ dist/
 # Generated market data
 data/*.csv
 data/*.parquet
+data/search_universe_manifest.json
+data/stock_universe_manifest.json
 
 # Editor files
 .vscode/
@@ -37,3 +39,11 @@ data/*.parquet
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Progress and log files
+*.log
+/results/
+STOCK_MOMENTUM_SEARCH_PLAN.md
+
+# Testing files
+/tests/
