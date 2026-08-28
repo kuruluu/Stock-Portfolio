@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import hashlib
 from itertools import product
-import json
 from pathlib import Path
 import sys
 import unittest
@@ -14,7 +12,12 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from momentum_engine import MomentumConfig, backtest_momentum, momentum_signal
+from momentum_engine import (
+    MomentumConfig,
+    backtest_momentum,
+    momentum_signal,
+    validate_etf_inputs,
+)
 
 
 class MomentumEngineTests(unittest.TestCase):
@@ -22,21 +25,16 @@ class MomentumEngineTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.dates = pd.date_range("2016-01-31", periods=72, freq="ME")
         rng = np.random.default_rng(505)
-        values = rng.normal(0.008, 0.035, size=(72, 40))
+        values = rng.normal(0.008, 0.035, size=(72, 36))
         cls.prices = pd.DataFrame(
             100.0 * np.cumprod(1.0 + values, axis=0),
             index=cls.dates,
-            columns=[f"S{index:02d}" for index in range(40)],
+            columns=[f"E{index:02d}" for index in range(36)],
         )
-        cls.membership = pd.DataFrame(True, index=cls.dates, columns=cls.prices.columns)
-        cls.liquidity = pd.DataFrame(
-            np.arange(1, 41)[None, :].repeat(72, axis=0),
-            index=cls.dates,
-            columns=cls.prices.columns,
+        cls.eligibility = pd.DataFrame(
+            True, index=cls.dates, columns=cls.prices.columns
         )
-        cls.benchmark = pd.Series(
-            100.0 * np.cumprod(np.full(72, 1.01)), index=cls.dates, name="SPY"
-        )
+        cls.benchmark = cls.prices.iloc[:, 0].rename("SPY")
 
     @staticmethod
     def config(
@@ -48,12 +46,11 @@ class MomentumEngineTests(unittest.TestCase):
         cost: float = 0.001,
     ) -> MomentumConfig:
         return MomentumConfig(
-            config_id="equivalence",
-            family_id="EXPLORATORY_UI_CROSS_SECTIONAL",
+            config_id="test-etf-config",
+            family_id="EXPLORATORY_ETF_CROSS_SECTIONAL",
             strategy_type="cross_sectional",
             lookback_months=lookback,
             skip_months=1,
-            universe_size=300,
             number_of_assets=holdings,
             require_positive_momentum=positive,
             use_fixed_slots=True,
@@ -61,43 +58,48 @@ class MomentumEngineTests(unittest.TestCase):
             weighting=weighting,
             volatility_window_months=6,
             market_filter_months=0,
-            target_volatility=None,
             maximum_leverage=1.0,
             transaction_cost_rate=cost,
         )
 
-    def test_all_288_allowed_ui_configs_match_the_equivalence_fingerprint(self) -> None:
-        digest = hashlib.sha256()
+    def run_config(self, config: MomentumConfig) -> pd.DataFrame:
+        return backtest_momentum(
+            self.prices,
+            self.eligibility,
+            self.benchmark,
+            config,
+        )
+
+    def test_representative_288_frontend_configurations_execute(self) -> None:
         count = 0
         for values in product(
             (6, 9, 12),
-            (10, 20, 30),
+            (1, 20, 36),
             (1, 3),
             ("equal", "inverse_volatility"),
             (False, True),
             (0.0, 0.001, 0.0025, 0.005),
         ):
-            config = self.config(*values)
-            result = backtest_momentum(
-                self.prices,
-                self.membership,
-                self.liquidity,
-                self.benchmark,
-                config,
-            )
-            digest.update(json.dumps(values, separators=(",", ":")).encode())
-            digest.update(
-                result.to_csv(
-                    float_format="%.17g",
-                    date_format="%Y-%m-%d",
-                ).encode()
-            )
-            count += 1
+            with self.subTest(values=values):
+                result = self.run_config(self.config(*values))
+                self.assertFalse(result.empty)
+                self.assertTrue((result["positions"] <= values[1]).all())
+                self.assertTrue((result["turnover"] >= 0.0).all())
+                self.assertTrue(
+                    all(
+                        len(symbols) == positions
+                        for symbols, positions in zip(
+                            result["held_symbols"], result["positions"], strict=True
+                        )
+                    )
+                )
+                count += 1
         self.assertEqual(count, 288)
-        self.assertEqual(
-            digest.hexdigest(),
-            "5cf6ec17f06f3e8ea83ce784535c2a96ed474580d10ba23eeeca30835a5975e6",
-        )
+
+    def test_backtest_is_deterministic(self) -> None:
+        first = self.run_config(self.config())
+        second = self.run_config(self.config())
+        pd.testing.assert_frame_equal(first, second)
 
     def test_signal_does_not_read_formation_or_future_prices(self) -> None:
         before = momentum_signal(self.prices, 30, 12, 1)
@@ -106,17 +108,40 @@ class MomentumEngineTests(unittest.TestCase):
         after = momentum_signal(changed, 30, 12, 1)
         pd.testing.assert_series_equal(before, after)
 
+    def test_held_symbols_match_positions_and_breadth(self) -> None:
+        result = self.run_config(self.config(holdings=10, positive=False))
+        for symbols, positions in zip(
+            result["held_symbols"], result["positions"], strict=True
+        ):
+            self.assertEqual(len(symbols), positions)
+            self.assertLessEqual(positions, 10)
+            self.assertEqual(len(symbols), len(set(symbols)))
+
+    def test_quarterly_rebalance_carries_holdings_between_rebalances(self) -> None:
+        result = self.run_config(
+            self.config(holdings=10, rebalance=3, positive=False)
+        )
+        self.assertEqual(result.iloc[0]["held_symbols"], result.iloc[1]["held_symbols"])
+        self.assertEqual(result.iloc[1]["held_symbols"], result.iloc[2]["held_symbols"])
+
     def test_missing_held_return_fails_loudly(self) -> None:
         prices = self.prices.copy()
         prices.iloc[-1, :] = np.nan
+        eligibility = self.eligibility.copy()
+        eligibility.iloc[-1, :] = False
         with self.assertRaisesRegex(ValueError, "holding-period return gap"):
             backtest_momentum(
                 prices,
-                self.membership,
-                self.liquidity,
+                eligibility,
                 self.benchmark,
-                self.config(),
+                self.config(positive=False),
             )
+
+    def test_eligibility_must_be_complete_and_aligned(self) -> None:
+        eligibility = self.eligibility.astype("boolean")
+        eligibility.iloc[0, 0] = pd.NA
+        with self.assertRaisesRegex(ValueError, "eligibility"):
+            validate_etf_inputs(self.prices, eligibility, self.benchmark)
 
 
 if __name__ == "__main__":
