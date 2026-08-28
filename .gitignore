@@ -45,5 +45,6 @@ Desktop.ini
 /results/
 STOCK_MOMENTUM_SEARCH_PLAN.md
 
-# Testing files
-/tests/
+# Keep the focused frontend tests visible and ignore unrelated local tests.
+/tests/*
+!/tests/test_momentum_*.py

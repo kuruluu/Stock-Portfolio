@@ -350,13 +350,25 @@ def probability_of_backtest_overfitting(
         out_locations = np.concatenate(
             [blocks[index] for index in range(number_of_blocks) if index not in in_block_ids]
         )
-        in_scores = clean.iloc[in_locations].apply(
-            lambda column: _monthly_sharpe(column.to_numpy()), axis=0
+        in_values = clean.iloc[in_locations].to_numpy(dtype=float)
+        out_values = clean.iloc[out_locations].to_numpy(dtype=float)
+        in_deviation = np.std(in_values, axis=0, ddof=1)
+        out_deviation = np.std(out_values, axis=0, ddof=1)
+        in_vector = np.divide(
+            np.mean(in_values, axis=0),
+            in_deviation,
+            out=np.full(clean.shape[1], -np.inf),
+            where=in_deviation > 0.0,
         )
+        out_vector = np.divide(
+            np.mean(out_values, axis=0),
+            out_deviation,
+            out=np.full(clean.shape[1], -np.inf),
+            where=out_deviation > 0.0,
+        )
+        in_scores = pd.Series(in_vector, index=clean.columns)
         winner = str(in_scores.idxmax())
-        out_scores = clean.iloc[out_locations].apply(
-            lambda column: _monthly_sharpe(column.to_numpy()), axis=0
-        )
+        out_scores = pd.Series(out_vector, index=clean.columns)
         ranks = out_scores.rank(method="average")
         relative_rank = float(ranks[winner] / (len(ranks) + 1.0))
         relative_rank = min(max(relative_rank, 1e-12), 1.0 - 1e-12)

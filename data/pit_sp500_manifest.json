@@ -1,0 +1,70 @@
+{
+  "created": "2026-08-01T12:53:05.809749-04:00",
+  "membership_source": "https://raw.githubusercontent.com/fja05680/sp500/c31ac3cc56f28cf9a02b4e694eff7ceab596a0ff/S%26P%20500%20Historical%20Components%20%26%20Changes%20%28Updated%29.csv",
+  "membership_source_commit": "c31ac3cc56f28cf9a02b4e694eff7ceab596a0ff",
+  "membership_source_sha256": "39a9202c9ef69a74c0ff07e2113ad41fb6da7c8c5b6cd9541f0185fb4391e717",
+  "membership_source_license": "MIT",
+  "membership_source_caveat": "Community-maintained history derived from an original historical file, Wikipedia changes, and manual research; not an official S&P licensed feed.",
+  "market_data_provider": "Alpaca SIP historical stock bars",
+  "adjustment": "all",
+  "symbol_mapping": "Alpaca entity mapping as of 2026-06-30; this joins historical ticker names for renamed entities while unmatched inactive symbols remain exact",
+  "start": "2016-01-31",
+  "end": "2026-06-30",
+  "months": 126,
+  "unique_historical_members": 741,
+  "minimum_monthly_members": 503,
+  "maximum_monthly_members": 506,
+  "coverage_gaps": 0,
+  "complete_coverage_required": true,
+  "provider_series_choices": {
+    "entity_mapped": 732,
+    "exact_symbol": 9
+  },
+  "alias_applications": [
+    {
+      "target": "AABA",
+      "source": "YHOO",
+      "before": "2017-06-19",
+      "filled_months": 17
+    },
+    {
+      "target": "ANDV",
+      "source": "TSO",
+      "before": "2017-08-01",
+      "filled_months": 19
+    },
+    {
+      "target": "APTV",
+      "source": "DLPH",
+      "before": "2017-11-17",
+      "filled_months": 22
+    },
+    {
+      "target": "ARNC",
+      "source": "AA",
+      "before": "2016-11-01",
+      "filled_months": 10
+    },
+    {
+      "target": "BHGE",
+      "source": "BHI",
+      "before": "2017-07-05",
+      "filled_months": 18
+    },
+    {
+      "target": "UAA",
+      "source": "UA",
+      "before": "2016-04-08",
+      "filled_months": 3
+    },
+    {
+      "target": "WYND",
+      "source": "WYN",
+      "before": "2018-06-01",
+      "filled_months": 29
+    }
+  ],
+  "terminal_cash_proxies": 12,
+  "terminal_proxy_policy": "When a member exits before another monthly bar exists, carry its last observable close forward for a zero-return cash exit; every use is audited.",
+  "research_only": true
+}

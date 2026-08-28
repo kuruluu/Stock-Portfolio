@@ -1,0 +1,22 @@
+{
+  "schema_revision": 1,
+  "market_id": "US_SP500_PIT",
+  "benchmark": "SPY",
+  "research_only": true,
+  "read_only": true,
+  "cost_stress_rate": 0.005,
+  "inputs": {
+    "prices": "data/pit_sp500_monthly_close.parquet",
+    "membership": "data/pit_sp500_membership.parquet",
+    "liquidity": "data/pit_sp500_monthly_liquidity.parquet",
+    "benchmark": "data/pit_spy_monthly_close.parquet",
+    "manifest": "data/pit_sp500_manifest.json"
+  },
+  "sha256": {
+    "prices": "e585a2209e89c01c3f4761431fd6a07c57b671b320be87906ce21fb977e8d150",
+    "membership": "6e1852cf54558f20b7f555d2dbe29a71e1f0087d4eaa5983eb07d49d0fb3be4d",
+    "liquidity": "3f7ba24caff6ef66c8c5fa8e4c7dd38274b4060ad68e39e45cada1355deb47de",
+    "benchmark": "20c22f19cedaa387714c2282f739aa4322024b39c27c206f723ad765cdfd8edb",
+    "manifest": "4b717c03bfaf564ea8dbdb282d1b834055719398d3ebf96753c241e59e467411"
+  }
+}
